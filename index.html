@@ -59,9 +59,10 @@
     <label>Campaign ID</label>
     <input type="text" id="campaignId" placeholder="输入 Campaign ID">
 
-    <label>Creative ID（要移除的）</label>
-    <input type="text" id="creativeId" placeholder="输入 Creative ID"
-      onkeydown="if(event.key==='Enter') run()">
+    <label>Creative ID（要移除的，多个请换行或用逗号分隔）</label>
+    <textarea id="creativeId" placeholder="输入 Creative ID，例如：&#10;abc123&#10;def456&#10;或 abc123, def456"
+      rows="4" style="width:100%;padding:9px 12px;border-radius:8px;border:1.5px solid #ddd;font-size:13px;outline:none;font-family:inherit;resize:vertical;"
+      onfocus="this.style.borderColor='#2563eb'" onblur="this.style.borderColor='#ddd'"></textarea>
 
     <button class="run-btn" id="runBtn" onclick="run()">🚀 开始执行</button>
   </div>
@@ -82,9 +83,10 @@ async function run() {
   const api_key      = document.getElementById("apiKey").value.trim();
   const ad_account_id = document.getElementById("adAccountId").value.trim();
   const campaign_id  = document.getElementById("campaignId").value.trim();
-  const creative_id  = document.getElementById("creativeId").value.trim();
+  const creativeRaw = document.getElementById("creativeId").value;
+  const creative_ids = creativeRaw.split(/[\n,]+/).map(s => s.trim()).filter(Boolean);
 
-  if (!api_key || !ad_account_id || !campaign_id || !creative_id) {
+  if (!api_key || !ad_account_id || !campaign_id || !creative_ids.length) {
     alert("请填写所有字段");
     return;
   }
@@ -102,7 +104,7 @@ async function run() {
     const res = await fetch(WEBHOOK, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ api_key, ad_account_id, campaign_id, creative_id }),
+      body: JSON.stringify({ api_key, ad_account_id, campaign_id, creative_ids }),
     });
 
     if (!res.ok) throw new Error(`请求失败 (HTTP ${res.status})`);
@@ -118,7 +120,7 @@ async function run() {
         <div><b>${icon} ${data.message}</b></div>
         <div class="detail">
           Campaign ID: ${data.campaign_id}<br>
-          Creative ID: ${data.creative_id}<br>
+          Creative ID: ${(Array.isArray(data.creative_ids) ? data.creative_ids : [data.creative_ids]).join(', ')}<br>
           更新的 Group 数：${data.groups_updated}
         </div>
       </div>`;
